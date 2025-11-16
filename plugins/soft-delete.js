@@ -43,37 +43,41 @@ module.exports = async function softDeletePlugin(app, opts) {
       continue
     }
     
-    // Hook: Override DELETE to do soft delete
-    entity.addHook('delete', async function softDelete(original, args) {
-      const userId = getCurrentUserId(this.request || {})
+    // Platformatic 3.x: Use mapper.addEntityHooks instead of entity.addHook
+    app.platformatic.addEntityHooks(entityName, {
+      // Hook: Override DELETE to do soft delete
+      delete: async function softDelete(original, args) {
+        const userId = getCurrentUserId(args.ctx?.reply?.request || {})
+        
+        app.log.info({ entity: entityName, id: args.where.id, userId }, 'Soft deleting record')
+        
+        // Convert DELETE to UPDATE
+        const result = await entity.save({
+          input: {
+            id: args.where.id,
+            deletedAt: new Date().toISOString(),
+            deletedBy: userId
+          },
+          ctx: args.ctx
+        })
+        
+        return result
+      },
       
-      app.log.info({ entity: entityName, id: args.where.id, userId }, 'Soft deleting record')
-      
-      // Convert DELETE to UPDATE
-      const result = await entity.save({
-        input: {
-          id: args.where.id,
-          deletedAt: new Date().toISOString(),
-          deletedBy: userId
+      // Hook: Auto-filter deleted records from find operations
+      find: async function filterDeleted(original, args) {
+        // Allow explicit includeDeleted flag
+        const includeDeleted = args.includeDeleted || false
+        delete args.includeDeleted // Remove custom flag
+        
+        if (!includeDeleted) {
+          // Add deleted_at IS NULL filter
+          args.where = args.where || {}
+          args.where.deletedAt = { eq: null }
         }
-      })
-      
-      return result
-    })
-    
-    // Hook: Auto-filter deleted records from find operations
-    entity.addHook('find', async function filterDeleted(original, args) {
-      // Allow explicit includeDeleted flag
-      const includeDeleted = args.includeDeleted || false
-      delete args.includeDeleted // Remove custom flag
-      
-      if (!includeDeleted) {
-        // Add deleted_at IS NULL filter
-        args.where = args.where || {}
-        args.where.deletedAt = { eq: null }
+        
+        return original(args)
       }
-      
-      return original.call(this, args)
     })
     
     app.log.info(`Soft-delete enabled for entity: ${entityName}`)

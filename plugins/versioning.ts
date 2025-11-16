@@ -73,8 +73,7 @@ async function versioningPlugin(app: any, opts?: any) {
    */
   async function getNextVersionNumber(reportId: number): Promise<number> {
     const result = await app.platformatic.db.query(
-      'SELECT MAX(version_number) as max_version FROM report_versions WHERE report_id = ?',
-      [reportId]
+      app.platformatic.sql`SELECT MAX(version_number) as max_version FROM report_versions WHERE report_id = ${reportId}`
     )
 
     const maxVersion = result[0]?.max_version || 0
@@ -86,8 +85,7 @@ async function versioningPlugin(app: any, opts?: any) {
    */
   async function clearCurrentFlags(reportId: number): Promise<void> {
     await app.platformatic.db.query(
-      'UPDATE report_versions SET is_current = 0 WHERE report_id = ? AND is_current = 1',
-      [reportId]
+      app.platformatic.sql`UPDATE report_versions SET is_current = 0 WHERE report_id = ${reportId} AND is_current = 1`
     )
   }
 
@@ -126,76 +124,85 @@ async function versioningPlugin(app: any, opts?: any) {
     return newVersion
   }
 
-  /**
-   * Hook: Create version on every Report save/update
-   */
-  reportsEntity.addHook('save', async function createVersion(this: any, original: any, args: any) {
-    // Execute original save first
-    const savedReport = await original.call(this, args)
+  // Platformatic 3.x: Use mapper.addEntityHooks instead of entity.addHook
+  app.platformatic.addEntityHooks('report', {
+    /**
+     * Hook: Create version on every Report save/update
+     */
+    save: async function versionAfterSave(original: any, args: any) {
+      app.log.info({ msg: 'Versioning save hook invoked' })
 
-    const userId = getCurrentUserId(this.request)
-    const changeReason = args.input?.change_reason || 'Report updated'
+      // Call original save first
+      const savedReport = await original(args)
 
-    try {
-      // Create version snapshot
-      const newVersion = await createVersionSnapshot(
-        savedReport as ReportEntity,
-        userId,
-        changeReason
-      )
+      app.log.info({ msg: 'Original save returned', savedReport })
 
-      // Update report.current_version_id FK
-      await app.platformatic.db.query(
-        'UPDATE reports SET current_version_id = ?, last_modified_by = ? WHERE id = ?',
-        [newVersion.id, userId, savedReport.id]
-      )
+      // Skip versioning if no report was saved
+      if (!savedReport) {
+        app.log.warn({ msg: 'No report saved, skipping versioning' })
+        return savedReport
+      }
 
-      app.log.info({ reportId: savedReport.id, versionId: newVersion.id, msg: 'Report.current_version_id updated' })
-    } catch (error: any) {
-      app.log.error({ reportId: savedReport.id, error: error.message, msg: 'Failed to create version snapshot' })
-      // Don't fail the save operation, just log the error
-      // In production, consider throwing or implementing retry logic
-    }
+      const userId = getCurrentUserId(args.ctx?.reply?.request)
+      const changeReason = args.input?.change_reason || 'Updated via API'
 
-    return savedReport
-  })
+      app.log.info({ msg: 'Versioning metadata', userId, changeReason })
 
-  /**
-   * Hook: Create version snapshot BEFORE soft-delete
-   * This preserves the state before deletion for audit purposes
-   */
-  reportsEntity.addHook('delete', async function versionBeforeDelete(this: any, original: any, args: any) {
-    const reportId = args.where?.id
-
-    if (!reportId) {
-      return original.call(this, args)
-    }
-
-    const userId = getCurrentUserId(this.request)
-
-    try {
-      // Get current report state before delete
-      const report = await reportsEntity.find({
-        where: { id: { eq: reportId } }
-      })
-
-      if (report && report.length > 0) {
-        // Create snapshot with special change_reason
-        await createVersionSnapshot(
-          report[0] as ReportEntity,
+      try {
+        // Create version snapshot
+        const newVersion = await createVersionSnapshot(
+          savedReport as ReportEntity,
           userId,
-          'Snapshot before soft-delete'
+          changeReason
         )
 
-        app.log.info({ reportId, msg: 'Pre-delete version snapshot created' })
-      }
-    } catch (error: any) {
-      app.log.error({ reportId, error: error.message, msg: 'Failed to create pre-delete snapshot' })
-      // Continue with delete even if snapshot fails
-    }
+        // Update report.current_version_id FK
+        await app.platformatic.db.query(
+          app.platformatic.sql`UPDATE reports SET current_version_id = ${newVersion.id}, last_modified_by = ${userId} WHERE id = ${savedReport.id}`
+        )
 
-    // Execute original delete (soft-delete plugin will intercept)
-    return original.call(this, args)
+        app.log.info({ reportId: savedReport.id, versionId: newVersion.id, msg: 'Report.current_version_id updated' })
+      } catch (error: any) {
+        app.log.error({ reportId: savedReport.id, error: error.message, msg: 'Failed to create version snapshot' })
+        // Don't fail the save operation, just log the error
+        // In production, consider throwing or implementing retry logic
+      }
+
+      return savedReport
+    },
+    delete: async function versionBeforeDelete(original: any, args: any) {
+      const reportId = args.where?.id
+
+      if (!reportId) {
+        return original(args)
+      }
+
+      const userId = getCurrentUserId(args.ctx?.reply?.request)
+
+      try {
+        // Get current report state before delete
+        const report = await reportsEntity.find({
+          where: { id: { eq: reportId } }
+        })
+
+        if (report && report.length > 0) {
+          // Create snapshot with special change_reason
+          await createVersionSnapshot(
+            report[0] as ReportEntity,
+            userId,
+            'Snapshot before soft-delete'
+          )
+
+          app.log.info({ reportId, msg: 'Pre-delete version snapshot created' })
+        }
+      } catch (error: any) {
+        app.log.error({ reportId, error: error.message, msg: 'Failed to create pre-delete snapshot' })
+        // Continue with delete even if snapshot fails
+      }
+
+      // Execute original delete (soft-delete plugin will intercept)
+      return original(args)
+    }
   })
 
   app.log.info('Versioning plugin loaded successfully')
