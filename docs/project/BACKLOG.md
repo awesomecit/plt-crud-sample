@@ -25,18 +25,20 @@ Implementare sistema gestionale documentale per refertazione medica enterprise-r
 
 **Goal**: Snapshot automatico ogni modifica referto in `report_versions`, API confronto/ripristino versioni, firma digitale.  
 **Value**: Tracciabilità clinica, rollback modifiche, validità legale documenti.  
-**Status**: IN_PROGRESS (70% complete)  
+**Status**: IN_PROGRESS (45% complete - Schema done, Plugin pending)  
 **Started**: 2024-11-16
 
-**Deliverables**:
-- ✅ Migration 002: report_versions table con version_number
-- ✅ Schema users, tags, attachments, report_tags junction
-- ✅ Test suite: 55 tests migration 002 passing
-- ✅ Documentazione completa: VERSIONING_AND_AUDIT.md (GDPR/HIPAA/FDA)
-- [ ] **NEXT**: Plugin versioning.js con hooks save/delete
-- [ ] API endpoints: /versions, /versions/compare, /versions/restore
-- [ ] Digital signature implementation (SHA-256)
-- [ ] Certified timestamps (TSA integration)
+**Deliverables** (in order):
+1. ✅ Migration 002: report_versions table con version_number
+2. ✅ Schema users, tags, attachments, report_tags junction
+3. ✅ Test suite: 55 tests migration 002 passing
+4. ✅ Documentazione completa: VERSIONING_AND_AUDIT.md (GDPR/HIPAA/FDA)
+5. [ ] **STEP 1 (NEXT)**: TypeScript support (tsconfig, types generation)
+6. [ ] **STEP 2**: Plugin versioning.js/ts con hooks save/delete
+7. [ ] **STEP 3**: Test versioning behavior (test/versioning.test.js/ts)
+8. [ ] **STEP 4**: API endpoints: /versions, /versions/compare, /versions/restore
+9. [ ] **STEP 5**: Digital signature implementation (SHA-256)
+10. [ ] **STEP 6**: Certified timestamps (TSA integration - optional v1.0)
 
 ### EPIC-003: Universal Audit Log 🔵 PLANNED
 
@@ -44,6 +46,15 @@ Implementare sistema gestionale documentale per refertazione medica enterprise-r
 **Value**: Forensics, compliance HIPAA (access tracking), analytics sicurezza.  
 **Status**: PLANNED  
 **Priority**: HIGH (post versioning plugin)
+
+**Deliverables** (sequential):
+1. [ ] Migration 003: audit_log table schema
+2. [ ] Plugin audit-trail.js/ts con hooks all entities
+3. [ ] Encryption audit data (AES-256)
+4. [ ] Tamper detection (hash chaining)
+5. [ ] API endpoints: /audit-log, /audit-log/export
+6. [ ] Test audit-trail behavior
+7. [ ] Anomaly detection real-time (optional v1.0)
 
 ---
 

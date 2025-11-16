@@ -5,3 +5,12 @@ node_modules/
 coverage/
 .tap/
 dist/
+
+# TypeScript
+dist/
+*.tsbuildinfo
+
+# Logs
+*.log
+
+*.nyc_output/  

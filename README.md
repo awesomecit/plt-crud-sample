@@ -32,6 +32,9 @@ npm install
 # Applica migrazioni database
 npx platformatic db migrations apply
 
+# Genera TypeScript types (opzionale)
+npm run types
+
 # Avvia server development
 npm run dev
 
@@ -287,6 +290,8 @@ npx platformatic db migrations apply
 
 ## Documentazione aggiuntiva
 
+- **Implementation Roadmap**: [docs/IMPLEMENTATION_ROADMAP.md](docs/IMPLEMENTATION_ROADMAP.md) - Ordine sequenziale step
+- **TypeScript Support**: [docs/TYPESCRIPT_SUPPORT.md](docs/TYPESCRIPT_SUPPORT.md) - Guida TypeScript (opzionale)
 - **Versioning & Audit Trail**: [docs/VERSIONING_AND_AUDIT.md](docs/VERSIONING_AND_AUDIT.md) - Compliance GDPR/HIPAA/FDA
 - **Timezone Management**: [docs/TIMEZONE_MANAGEMENT.md](docs/TIMEZONE_MANAGEMENT.md)
 - **Project Structure**: [docs/project/](docs/project/) (EPIC, STORY, TASK)

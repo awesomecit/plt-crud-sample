@@ -6,10 +6,15 @@
   "scripts": {
     "dev": "npx platformatic start",
     "start": "npx platformatic start",
-    "test": "tap --reporter=spec --coverage-report=html 'test/**/*.test.js'",
+    "test": "tap --reporter=spec --coverage-report=html 'test/**/*.test.{js,ts}'",
+    "test:js": "tap --reporter=spec 'test/**/*.test.js'",
+    "test:ts": "tap --reporter=spec 'test/**/*.test.ts'",
     "migrate": "npx platformatic plt-crud-sample:migrations:apply",
     "migrate:create": "npx platformatic plt-crud-sample:migrations:create",
-    "seed": "npx platformatic plt-crud-sample:seed"
+    "seed": "npx platformatic plt-crud-sample:seed",
+    "types": "npx platformatic plt-crud-sample:types",
+    "build": "tsc --noEmit",
+    "typecheck": "tsc --noEmit"
   },
   "keywords": [
     "platformatic",
@@ -23,7 +28,11 @@
     "@platformatic/db": "^3.20.0"
   },
   "devDependencies": {
+    "@types/better-sqlite3": "^7.6.13",
+    "@types/node": "^24.10.1",
     "better-sqlite3": "^12.4.1",
-    "tap": "^16.3.10"
+    "tap": "^16.3.10",
+    "tsx": "^4.20.6",
+    "typescript": "^5.9.3"
   }
 }
