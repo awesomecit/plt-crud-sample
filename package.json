@@ -1,0 +1,29 @@
+{
+  "name": "plt-crud-sample",
+  "version": "0.1.0",
+  "description": "Platformatic DB CRUD with soft-delete, versioning, audit",
+  "main": "index.js",
+  "scripts": {
+    "dev": "npx platformatic start",
+    "start": "npx platformatic start",
+    "test": "tap --reporter=spec --coverage-report=html 'test/**/*.test.js'",
+    "migrate": "npx platformatic plt-crud-sample:migrations:apply",
+    "migrate:create": "npx platformatic plt-crud-sample:migrations:create",
+    "seed": "npx platformatic plt-crud-sample:seed"
+  },
+  "keywords": [
+    "platformatic",
+    "crud",
+    "soft-delete",
+    "audit"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@platformatic/db": "^3.20.0"
+  },
+  "devDependencies": {
+    "better-sqlite3": "^12.4.1",
+    "tap": "^16.3.10"
+  }
+}
