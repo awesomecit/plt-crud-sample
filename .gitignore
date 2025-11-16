@@ -13,4 +13,4 @@ dist/
 # Logs
 *.log
 
-*.nyc_output/  
+*.nyc_output

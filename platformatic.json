@@ -28,6 +28,9 @@
     "paths": [
       {
         "path": "./plugins/soft-delete.js"
+      },
+      {
+        "path": "./plugins/versioning.ts"
       }
     ]
   }

@@ -17,15 +17,15 @@ module.exports = async function softDeletePlugin(app, opts) {
   
   // Entities with soft delete support
   const softDeleteEntities = [
-    'reports',
-    'reportTypes',
-    'practitioners', 
-    'patients',
-    'users',
-    'tags',
-    'reportTags',
-    'reportVersions',
-    'attachments'
+    'report',
+    'reportType',
+    'practitioner', 
+    'patient',
+    'user',
+    'tag',
+    'reportTag',
+    'reportVersion',
+    'attachment'
   ]
   
   // Get current user from request context (for deleted_by)
